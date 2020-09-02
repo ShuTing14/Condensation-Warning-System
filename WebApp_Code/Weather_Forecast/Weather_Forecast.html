@@ -1,0 +1,294 @@
+<!-- HTML file to parse Google Sheet data of Weather Forecast-->
+<html>
+
+  <head>
+    <!-- Metadata used-->
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+    <link href="../../assets/styles.css" rel="stylesheet" />
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  </head>
+
+  <body>
+    <p></p>
+    <div id="chart_div1"></div>
+  </body>
+
+  <style>
+    body {
+      background-color: #262D47;
+    }
+
+  </style>
+  
+  <!-- ApexChart Source used to draw Apex Charts-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@latest"></script>
+  <script src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
+  <script>
+  
+    // URL of Google Sheet
+    var url = "https://spreadsheets.google.com/feeds/list/1hOCkLYOmNppAvnmpAEzr9KAVQZOnAnJwGx779zjbQdc/od6/public/values?alt=json";
+    
+    // Variables to run getData and plot function with a timeout
+    var VarGetData = setTimeout(getData, 1000);
+    var VarPlot = setTimeout(plot, 3000);
+    
+    // Variable used to store Temperature, Humidity and Dewpoint 
+    var dataTemperature = [];
+    var dataHumidity = [];
+    var dataDewPoint = [];
+    
+	// Function to get JSON data from Google Sheet
+    function getData() {
+	
+	  // Read data as JSON from the URL
+      $.getJSON(url, function(ForecastData) {
+
+		// For loop to read every data avaliable
+		// Data is read through individual gsx$ key.
+		// Each individual gsx$ key represent one column in Google Sheet
+        for (var i = 0; i < ForecastData.feed.entry.length; i++) {
+          var time = ForecastData.feed.entry[i].gsx$_ciyn3.$t;
+          var temperature = ForecastData.feed.entry[i].gsx$_ckd7g.$t;
+          var humidity = ForecastData.feed.entry[i].gsx$_clrrx.$t;
+          var dewpoint = ForecastData.feed.entry[i].gsx$_cyevm.$t;
+
+		  // Push all the data as 2D array of array, used to plot line graph
+          dataTemperature.push({
+            x: time,
+            y: temperature
+          });
+
+          dataHumidity.push({
+            x: time,
+            y: humidity
+          });
+          
+          dataDewPoint.push({
+            x: time,
+            y: dewpoint
+          });
+        }
+      });
+    }
+
+	// Function to get updated JSON data from Google Sheet
+    function getUpdate() {
+	
+	  // Read data as JSON from the URL
+      $.getJSON(url, function(ForecastData) {
+		
+		// Clear all previous data
+        dataTemperature = [];
+        dataHumidity = [];
+        dataDewPoint = [];
+
+		// For loop to read every data avaliable
+		// Data is read through individual gsx$ key.
+		// Each individual gsx$ key represent one column in Google Sheet		
+        for (var i = 0; i < ForecastData.feed.entry.length; i++) {
+
+          var time = ForecastData.feed.entry[i].gsx$_ciyn3.$t;
+          var temperature = ForecastData.feed.entry[i].gsx$_ckd7g.$t;
+          var humidity = ForecastData.feed.entry[i].gsx$_clrrx.$t;
+          var dewpoint = ForecastData.feed.entry[i].gsx$_cyevm.$t;
+
+		  // Push all the data as 2D array of array, used to plot line graph
+          dataTemperature.push({
+            x: time,
+            y: temperature
+          });
+
+          dataHumidity.push({
+            x: time,
+            y: humidity
+          });
+          
+          dataDewPoint.push({
+            x: time,
+            y: dewpoint
+          });
+        }
+      });
+    }
+
+	// Function to plot the multiple line graph
+    function plot() {
+      
+	  // Options for the graph
+      var options = {
+        chart: {
+          background: '#262D47',
+          foreColor: '#ffffff',
+          fontFamily: 'Times New Roman, sans-serif',
+          height: 450,
+          type: 'line',
+          animations: {
+            enabled: true,
+            easing: 'linear',
+            dynamicAnimation: {
+              speed: 1000
+            }
+          },
+          zoom: {
+            enabled: false
+          }
+        },
+        stroke: {
+          width: 3,
+          curve: 'straight'
+        },
+		// Title of the graph
+        title: {
+          text: 'Weather Forecast for 24 Hours',
+          align: 'middle',
+          style: {
+            fontSize: '25',
+            color: '#f9f906',
+          },
+        },
+        grid: {
+          row: {
+            colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+            opacity: 0.07
+          },
+        },
+		// Series name of the lines
+        series: [{
+          name: 'Temperature',
+          type: 'line',
+          data: dataTemperature
+        }, {
+          name: 'Dewpoint',
+          type: 'line',
+          data: dataDewPoint
+        }, {
+          name: 'Humidity',
+          type: 'line',
+          data: dataHumidity
+        }],
+        fill: {
+          type: 'solid',
+          opacity: [0.35, 0.35],
+        },
+        colors: ['#FF4040', '#00FFF9','#FFFF00'],
+        markers: {
+          size: 5
+        },
+		// left Y axis of temperature at same scale. 
+        yaxis: [ {seriesName: 'Temperature',forceNiceScale: true,min:0,max:40,show: false},
+            {
+            seriesName: 'Dewpoint', forceNiceScale: true,
+            min:0,max:40,
+            labels: {
+              style: {
+                fontSize: '14px',
+                fontFamily: 'Helvetica, TimeNewsRoman, sans-serif',
+                cssClass: 'apexcharts-yaxis-label',
+              }
+            },
+            title: {
+              text: 'Degree Celsius',
+              offsetX: -10,
+              style: {
+                fontSize: '20px',
+                color: '#FF4040',
+              }
+            },
+          },
+          {
+		  // Right Y axis of percentage.
+            opposite: true,
+            
+            labels: {
+              style: {
+                fontSize: '14px',
+                fontFamily: 'Helvetica, TimeNewsRoman, sans-serif',
+                cssClass: 'apexcharts-yaxis-label',
+              }
+            },
+            title: {
+              text: 'Percentage(%)',
+              offsetX: 10,
+              style: {
+                fontSize: '20px',
+                color: '#00FFF9',
+              }
+            },
+          },
+        ],
+		// X axis of time
+        xaxis: {
+          labels: {
+            style: {
+              fontSize: '14px',
+              fontFamily: 'Helvetica, TimeNewsRoman, sans-serif',
+              cssClass: 'apexcharts-xaxis-label',
+            }
+          },
+          type: 'category',
+          title: {
+            text: 'Date & Time',
+            offsetY: 11,
+            style: {
+              fontSize: '20px',
+              color: '#f9f906',
+            }
+          }
+        },
+        legend: {
+          horizontalAlign: 'center',
+          fontSize: '20px',
+        },
+        tooltip: {
+          shared: true,
+          intersect: false,
+        }
+      }
+      var chart = new ApexCharts(
+        document.querySelector("#chart_div1"),
+        options
+      );
+      chart.render();
+
+      //update the data in the series every 5000ms
+      window.setInterval(function(Data) {
+		
+		// Run getUpdate function every 5000ms
+        getUpdate();
+
+		// Update the line graph with new data
+        chart.updateSeries([{
+          name: 'Temperature',
+          type: 'line',
+          data: dataTemperature
+        }, {
+          name: 'Dewpoint',
+          type: 'line',
+          data: dataDewPoint
+        }, {
+          name: 'Humidity',
+          type: 'line',
+          data: dataHumidity
+        }])
+        chart.updateOptions({
+        title: {
+            text: 'Weather Forecast for 24 Hours',
+          }
+        })
+      }, 5000)
+    }
+
+  </script>
+
+</html>
